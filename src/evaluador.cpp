@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
@@ -7,6 +8,7 @@
 #define CTRL_CMD "ctrl"
 #define REPO_CMD "rep"
 #define REGI_CMD "reg"
+#define MEM_DFID "evaluator"
 
 using namespace std;
 
@@ -18,7 +20,7 @@ typedef struct config_init_t {
       blood_reactive(100),
       skin_reactive(100),
       detrit_reactive(100),
-      _id("evaluator") {}
+      _id(MEM_DFID) {}
   unsigned int entries;
   unsigned int queue_input_length;
   unsigned int queue_output_length;
@@ -29,7 +31,12 @@ typedef struct config_init_t {
 } config_init_t;
 
 // Para recordar: tipo (*funcion)(arg1, arg2, argn) <- para hacer callbacks
-int parse_opts(int argc, char ** argv, void (*init_callback)(config_init_t *)) {
+int parse_opts(
+    int argc,
+    char ** argv,
+    void (* init_callback)(config_init_t *),
+    void (* ctrl_callback)(string))
+  {
   if (argc < 1) return -1; // Numero invalido de argumentos para el programa min[1]
 
   if (strcmp(argv[1], INIT_CMD) == 0) {
@@ -76,6 +83,14 @@ int parse_opts(int argc, char ** argv, void (*init_callback)(config_init_t *)) {
     (*init_callback)(preset);
   } else if (strcmp(argv[1], CTRL_CMD) == 0) {
     //config->mode = config_t::CTRL;
+    string shared_memory = MEM_DFID;
+    if (argc >= 3) {
+      if (strcmp(argv[2], "-s") == 0 && argv[3] != NULL) {
+        shared_memory = argv[3];
+      }
+    }
+
+    (* ctrl_callback)(shared_memory);
   } else if (strcmp(argv[1], REPO_CMD) == 0) {
     //config->mode = config_t::REPO;
   } else if (strcmp(argv[1], REGI_CMD) == 0) {
@@ -85,6 +100,19 @@ int parse_opts(int argc, char ** argv, void (*init_callback)(config_init_t *)) {
   }
 
   return 0;
+}
+void ctrl(string shared_memory) {
+  cout << "Memoria compartida: " << shared_memory << endl;
+
+  string line;
+
+  for (;;) {
+    cout << "> ";
+    getline(cin, line);
+    if (line.empty()) break;
+
+    cout << " Se ingreso: " << line << endl;
+  }
 }
 
 void init(config_init_t * preset) {
@@ -100,7 +128,7 @@ void init(config_init_t * preset) {
 }
 
 int main(int argc, char* argv[]) {
-  int p = parse_opts(argc, argv, init);
+  int p = parse_opts(argc, argv, init, ctrl);
 
   if (p < 0) {
     // Error en el parseo:
