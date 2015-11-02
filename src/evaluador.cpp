@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define INIT_CMD "init"
 #define CTRL_CMD "ctrl"
@@ -178,41 +179,61 @@ void validarReg(string line) {
 
   split(line, ' ', v);
 
-  if (v.size() == 3) {
-    int inBandeja;
-    int inCantidad;
-    char inMuestra;
-
-    if (isInteger(v[0])) {
-      inBandeja = atoi(v[0].c_str());
-    } else {
-      cerr << "Error. Uso: <integer> {B|D|S} <integer>" << endl;
-      exit(1);
-    }
-    if (isInteger(v[2])) {
-      inCantidad = atoi(v[2].c_str());
-    } else {
-      cerr << "Error. Uso: <integer> {B|D|S} <integer>" << endl;
-      exit(1);
-    }
-    if (strcmp(v[1].c_str(), "B") == 0 || strcmp(v[1].c_str(), "D") == 0  || strcmp(v[1].c_str(), "S") == 0) {
-      inMuestra = v[1].c_str()[0];
-    } else {
-      cerr << "Error. Uso: <integer> {B|D|S} <integer>" << endl;
-      exit(1);
+    if (v.size() == 3) {
+      int inBandeja;
+      int inCantidad;
+      char inMuestra;
+      if (isInteger(v[0]) && (atoi(v[2].c_str()) > 0)) {
+        if (isInteger(v[2]) && (atoi(v[2].c_str()) > 0)) {
+          if (strcmp(v[1].c_str(), "B") == 0 || strcmp(v[1].c_str(), "D") == 0  || strcmp(v[1].c_str(), "S") == 0) {
+            inBandeja = atoi(v[0].c_str());
+            inCantidad = atoi(v[2].c_str());
+            inMuestra = v[1].c_str()[0];
+            cout << "bandeja: " << inBandeja << " cantidad: " << inCantidad << " muestra: "<< inMuestra << endl;
+          }
+        }
+      }
     }
 
-  } else {
-    cerr << "/Error. Uso: <integer> {B|D|S} <integer>" << endl;
-    exit(1);
-  }
-  //TODO guardar en memoria compartida
+/*
+    if (v.size() == 3) {
+      int inBandeja;
+      int inCantidad;
+      char inMuestra;
 
-  cout << "1: " << v[0] << " 2: " << v[1] << " 3: " << v[2] << endl;
-}
+        if (isInteger(v[0])) {
+          inBandeja = atoi(v[0].c_str());
+        } else {
+          cerr << "Error. Uso: <integer> {B|D|S} <integer>" << endl;
+          exit(1);
+        }
+        if (isInteger(v[2])) {
+          inCantidad = atoi(v[2].c_str());
+        } else {
+          cerr << "Error. Uso: <integer> {B|D|S} <integer>" << endl;
+          exit(1);
+        }
+        if (strcmp(v[1].c_str(), "B") == 0 || strcmp(v[1].c_str(), "D") == 0  || strcmp(v[1].c_str(), "S") == 0) {
+          inMuestra = v[1].c_str()[0];
+        } else {
+          cerr << "Error. Uso: <integer> {B|D|S} <integer>" << endl;
+          exit(1);
+        }
+
+      } else {
+        cerr << "/Error. Uso: <integer> {B|D|S} <integer>" << endl;
+        exit(1);
+      }
+      //TODO guardar en memoria compartida
+
+      cout << "1: " << v[0] << " 2: " << v[1] << " 3: " << v[2] << endl;
+    }
+    */
 
 void regi(string shared_memory, string * files, size_t size) {
   cout << "Memoria compartida: " << shared_memory << endl;
+
+  validarReg();
 
   if (true) //TODO llamar validarReg
 
@@ -224,7 +245,7 @@ void regi(string shared_memory, string * files, size_t size) {
 
 
 int main(int argc, char* argv[]) {
-  int p = parse_opts(argc, argv, init, ctrl, regi);
+  int p = parse_opts(argc, argv, init, ctrl, reg);
 
   if (p < 0) {
     // Error en el parseo:
