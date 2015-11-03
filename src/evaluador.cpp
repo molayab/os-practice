@@ -101,6 +101,30 @@ int parse_opts(
     (* ctrl_callback)(shared_memory);
 
   } else if (strcmp(argv[1], REPO_CMD) == 0) { // If rep
+      string shared_memory = MEM_DFID;
+      int inIteractive;
+      int inm;
+
+      for (int opts = argc - 2; opts > 0; opts-=2) {
+        if (strcmp(argv[opts], "-s") == 0 && argv[opts + 1] != NULL) {
+          shared_memory = argv[opts + 1];
+        }
+        else {
+          if (strcmp(argv[opts], "-i") == 0 && argv[opts + 1] != NULL) {
+            inIteractive = atoi(argv[opts+1]);
+          }
+          else if (strcmp(argv[opts], "-m") == 0 && argv[opts + 1] != NULL) {
+            inm = atoi(argv[opts+1]);
+          }
+          else {
+            cerr << "evaluator rep [-s <string>] { -i <integer> | -m <integer> }" << endl;
+          }
+        }
+
+      }
+
+      cout << "evaluara: " << shared_memory << endl;
+      //TODO callback REPO
     //config->mode = config_t::REPO;
 
   } else if (strcmp(argv[1], REGI_CMD) == 0) { // If reg
