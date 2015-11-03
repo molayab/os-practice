@@ -39,7 +39,7 @@ int parse_opts(
     char ** argv,
     void (* init_callback)(config_init_t *),
     void (* ctrl_callback)(string),
-    void (* regi_callback)(string, string *, size_t))
+    void (* regi_callback)(string, vector<string>, bool))
   {
   if (argc < 1) return -1; // Numero invalido de argumentos para el programa min[1]
 
@@ -105,20 +105,40 @@ int parse_opts(
 
   } else if (strcmp(argv[1], REGI_CMD) == 0) { // If reg
     string shared_memory = MEM_DFID;
-    string * files = new string[argc - 3];
+    vector<string> files;
 
-    int j = 0;
-    for (int i = argc - 1; i > 0; i--) {
-      if (strcmp(argv[i], "-n") == 0 && argv[i + 1] != NULL) {
+    bool isIterative = false;
+
+    for (int i = argc - 1; i > 1; --i) {
+      if (strcmp(argv[i], "-n") == 0) {
+        if (argc < 5) {
+          cerr << "Error. Uso: evaluator reg [-n <string>] {{<filename>} ... | - }" << endl;
+          exit(1);
+        }
+        if (strcmp(argv[i+1], "-") == 0) {
+          cerr << "Error. Uso: evaluator reg [-n <string>] {{<filename>} ... | - }" << endl;
+          exit(1);
+        }
+
         shared_memory = argv[i + 1];
+        --i;
+
+        continue;
+      } else if (strcmp(argv[i], "-") == 0) {
+        if (argc > 5) {
+          cerr << "Error. Uso: evaluator reg [-n <string>] {{<filename>} ... | - }" << endl;
+          exit(1);
+        }
+
+        isIterative = true;
+        continue;
+      } else {
+        files.push_back(argv[i]);
       }
 
-      if (i > 3) {
-        files[j++] = argv[i];
-      }
     }
 
-    (* regi_callback)(shared_memory, files, j);
+    (* regi_callback)(shared_memory, files, isIterative);
   } else {
     return -1; // Comando invalido
   }
@@ -174,7 +194,7 @@ void init(config_init_t * preset) {
   delete preset;
 }
 
-void validarReg(string line) {
+bool validarReg(string line) {
   vector<string> v;
 
   split(line, ' ', v);
@@ -186,66 +206,50 @@ void validarReg(string line) {
       if (isInteger(v[0]) && (atoi(v[2].c_str()) > 0)) {
         if (isInteger(v[2]) && (atoi(v[2].c_str()) > 0)) {
           if (strcmp(v[1].c_str(), "B") == 0 || strcmp(v[1].c_str(), "D") == 0  || strcmp(v[1].c_str(), "S") == 0) {
-            inBandeja = atoi(v[0].c_str());
-            inCantidad = atoi(v[2].c_str());
-            inMuestra = v[1].c_str()[0];
-            cout << "bandeja: " << inBandeja << " cantidad: " << inCantidad << " muestra: "<< inMuestra << endl;
+            return true;
           }
         }
       }
     }
-
-/*
-    if (v.size() == 3) {
-      int inBandeja;
-      int inCantidad;
-      char inMuestra;
-
-        if (isInteger(v[0])) {
-          inBandeja = atoi(v[0].c_str());
-        } else {
-          cerr << "Error. Uso: <integer> {B|D|S} <integer>" << endl;
-          exit(1);
-        }
-        if (isInteger(v[2])) {
-          inCantidad = atoi(v[2].c_str());
-        } else {
-          cerr << "Error. Uso: <integer> {B|D|S} <integer>" << endl;
-          exit(1);
-        }
-        if (strcmp(v[1].c_str(), "B") == 0 || strcmp(v[1].c_str(), "D") == 0  || strcmp(v[1].c_str(), "S") == 0) {
-          inMuestra = v[1].c_str()[0];
-        } else {
-          cerr << "Error. Uso: <integer> {B|D|S} <integer>" << endl;
-          exit(1);
-        }
-
-      } else {
-        cerr << "/Error. Uso: <integer> {B|D|S} <integer>" << endl;
-        exit(1);
-      }
-      //TODO guardar en memoria compartida
-
-      cout << "1: " << v[0] << " 2: " << v[1] << " 3: " << v[2] << endl;
-    }
-    */
-
-void regi(string shared_memory, string * files, size_t size) {
-  cout << "Memoria compartida: " << shared_memory << endl;
-
-  validarReg();
-
-  if (true) //TODO llamar validarReg
-
-
+    return false;
   }
 
-  delete[] files;
+void regi(string shared_memory, vector<string> files, bool isIterative) {
+  int inBandeja;
+  int inCantidad;
+  int inMuestra;
+
+  cout << "Memoria compartida: " << shared_memory << endl;
+
+  if (isIterative) {
+    string line;
+
+    for (;;) {
+      cout << "> ";
+      getline(cin, line);
+      if (line.empty()) break;
+      if (validarReg(line)) {
+        vector<string> v;
+        split(line, ' ', v);
+        inBandeja = atoi(v[0].c_str());
+        inCantidad = atoi(v[2].c_str());
+        inMuestra = v[1].c_str()[0];
+        cout << " Se ingreso: " << line << endl;
+        //TODO guardar linea
+      }
+
+    }
+
+  } else {
+    for (int i = 0; i < files.size(); ++i) {
+      cout << files[i] << endl;
+    }
+  }
 }
 
 
 int main(int argc, char* argv[]) {
-  int p = parse_opts(argc, argv, init, ctrl, reg);
+  int p = parse_opts(argc, argv, init, ctrl, regi);
 
   if (p < 0) {
     // Error en el parseo:
