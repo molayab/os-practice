@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "console.h"
+
 #define INIT_CMD "init"
 #define CTRL_CMD "ctrl"
 #define REPO_CMD "rep"
@@ -192,18 +194,8 @@ bool isInteger(const string& s) {
 }
 
 void ctrl(string shared_memory) {
-  cout << "Memoria compartida: " << shared_memory << endl;
-
-  string line;
-
-  for (;;) {
-    cout << "> ";
-    getline(cin, line);
-    if (line.empty()) break;
-
-    cout << " Se ingreso: " << line << endl;
-
-  }
+  Console cons(CONTROL, shared_memory);
+  cons.start();
 }
 
 void init(config_init_t * preset) {
@@ -246,24 +238,7 @@ void regi(string shared_memory, vector<string> files, bool isIterative) {
   cout << "Memoria compartida: " << shared_memory << endl;
 
   if (isIterative) {
-    string line;
-
-    for (;;) {
-      cout << "> ";
-      getline(cin, line);
-      if (line.empty()) break;
-      if (validarReg(line)) {
-        vector<string> v;
-        split(line, ' ', v);
-        inBandeja = atoi(v[0].c_str());
-        inCantidad = atoi(v[2].c_str());
-        inMuestra = v[1].c_str()[0];
-        cout << " Se ingreso: " << line << endl;
-        //TODO guardar linea
-      }
-
-    }
-
+    // TODO
   } else {
     for (int i = 0; i < files.size(); ++i) {
       cout << files[i] << endl;
