@@ -8,32 +8,11 @@
 #include <stdlib.h>
 
 #include "console.h"
-
-#define INIT_CMD "init"
-#define CTRL_CMD "ctrl"
-#define REPO_CMD "rep"
-#define REGI_CMD "reg"
-#define MEM_DFID "evaluator"
+#include "config.h"
+#include "default.h"
+#include "shared_data.h"
 
 using namespace std;
-
-typedef struct config_init_t {
-  config_init_t() :
-      entries(5),
-      queue_input_length(6),
-      queue_output_length(10),
-      blood_reactive(100),
-      skin_reactive(100),
-      detrit_reactive(100),
-      _id(MEM_DFID) {}
-  unsigned int entries;
-  unsigned int queue_input_length;
-  unsigned int queue_output_length;
-  int blood_reactive;
-  int skin_reactive;
-  int detrit_reactive;
-  string _id;
-} config_init_t;
 
 // Para recordar: tipo (*funcion)(arg1, arg2, argn) <- para hacer callbacks
 int parse_opts(
@@ -207,6 +186,10 @@ void init(config_init_t * preset) {
   cout << "Blood react: " << preset->blood_reactive << endl;
   cout << "Detrite react: " << preset->detrit_reactive << endl;
 
+  mem_id id;
+
+  id = create_shm(preset);
+  
   delete preset;
 }
 
