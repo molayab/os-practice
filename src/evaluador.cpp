@@ -62,6 +62,9 @@ int parse_opts(
       else if (strcmp(argv[opts], "-s") == 0 && argv[opts + 1] != NULL) {
         preset->skin_reactive = atoi(argv[opts + 1]);
       }
+      else if (strcmp(argv[opts], "-ee") == 0 && argv[opts + 1] != NULL) {
+        preset->queue_sample_length = atoi(argv[opts + 1]);
+      }
       else {
         cerr << "Error. Uso: evaluator init [-i <integer>] [-ie <integer>] [-oe <integer>] [-n <string>] [-b <integer>] [-d <integer>] [-s <integer>]" << endl;
                exit(1);
@@ -189,7 +192,7 @@ void init(config_init_t * preset) {
   mem_id id;
 
   id = create_shm(preset);
-  
+
   delete preset;
 }
 
