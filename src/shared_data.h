@@ -6,14 +6,18 @@
 #include <stdio.h>
 #include "config.h"
 
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
 /*
  * En este archivo se encuentran todas las estructuras que hacen
  * parte de la memoria compartida del programa, asi como las
  * operaciones de estas. Asi mismo, en este archivo se encuentran
- * las operaciones de memoria compartida, por lo que solo es 
- * necesario llamar a las funciones necesarias, la memoria 
+ * las operaciones de memoria compartida, por lo que solo es
+ * necesario llamar a las funciones necesarias, la memoria
  * sera devuelta en su respectiva estructura. Note que no se hace
- * uso de clases ni POO. Todos los llamados a esta seccion del 
+ * uso de clases ni POO. Todos los llamados a esta seccion del
  * codigo son de bajo nivel y orientados a estructuras y func.
  * codigo C con conponentes de C++.
  *
@@ -38,6 +42,9 @@ typedef struct mem_shared_t {
     queue_t * input_queue;
     size_t queues;
 
+    queue_t queue_b;
+    queue_t queue_d;
+    queue_t queue_s;
     // Semaforos y variables de ayuda en la memoria compartida;
 } mem_shared_t;
 
