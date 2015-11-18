@@ -39,11 +39,20 @@ mem_id create_shm(config_init_t * cfg) {
     queue_create(&context->queue_d, cfg->queue_sample_length);
     queue_create(&context->queue_s, cfg->queue_sample_length);
 
+    return cfg->_id.c_str();
 }
 
-mem_shared_t * read_shm(mem_id id) {
-    // TODO - Terminar
-    return NULL;
+mem_shared_t * read_shm(mem_id id, config_init_t * cfg) {
+    int fd = shm_open(id, O_RDONLY, 0666);
+
+    size_t l = sizeof(mem_shared_t) + (cfg->entries * sizeof(queue_t *));
+    mem_shared_t * base = (mem_shared_t *)mmap(0, l, PROT_READ, MAP_SHARED, fd, 0);
+    if (base == MAP_FAILED) {
+      perror("Error al mapear (read_shm) la memoria.");
+      exit(1);
+    }
+
+    return base;
 }
 
 int queue_create(queue_t * q, unsigned int size) {

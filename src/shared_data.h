@@ -58,7 +58,7 @@ void queue_delete(queue_t *);
 // Fin;
 // Operaciones de memoria compartida.
 mem_id create_shm(config_init_t *);
-mem_shared_t * read_shm(mem_id);
+mem_shared_t * read_shm(mem_id, config_init_t *);
 // Fin;
 
 #endif

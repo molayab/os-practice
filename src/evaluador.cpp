@@ -193,6 +193,8 @@ void init(config_init_t * preset) {
 
   id = create_shm(preset);
 
+  mem_shared_t * r = read_shm(id, preset);
+
   delete preset;
 }
 
