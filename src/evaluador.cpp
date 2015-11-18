@@ -226,7 +226,8 @@ void regi(string shared_memory, vector<string> files, bool isIterative) {
   cout << "Memoria compartida: " << shared_memory << endl;
 
   if (isIterative) {
-    // TODO
+    Console cons(REGISTER, shared_memory);
+    cons.start();
   } else {
     for (int i = 0; i < files.size(); ++i) {
       cout << files[i] << endl;
