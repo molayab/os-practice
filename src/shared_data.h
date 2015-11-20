@@ -1,5 +1,6 @@
 #ifndef SHM_H
 #define SHM_H
+#define SHM_CONTEXT "camocontext"
 
 #include <cstring>
 #include <cstdlib>
@@ -57,8 +58,10 @@ const sample_t * dequeue(queue_t *);
 void queue_delete(queue_t *);
 // Fin;
 // Operaciones de memoria compartida.
-mem_id create_shm(config_init_t *);
-mem_shared_t * read_shm(mem_id, config_init_t *);
+size_t create_shm(config_init_t *);
+mem_shared_t * read_shm(const char *, size_t);
+
+size_t * shm_context_size();
 // Fin;
 
 #endif

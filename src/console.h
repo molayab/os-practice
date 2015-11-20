@@ -4,7 +4,6 @@
 // C++
 #include <string>
 #include <iostream>
-#include <string>
 
 // C
 #include <pthread.h>

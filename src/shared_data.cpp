@@ -1,6 +1,6 @@
 #include "shared_data.h"
 
-mem_id create_shm(config_init_t * cfg) {
+size_t create_shm(config_init_t * cfg) {
     if (cfg == NULL) {
         perror("Error al crear la memoria dada la configuracion.");
         exit(1);
@@ -18,7 +18,7 @@ mem_id create_shm(config_init_t * cfg) {
 
     mem_shared_t * context = (mem_shared_t *)mmap(NULL, l, PROT_READ|PROT_WRITE, MAP_SHARED, mem, 0);
     if (context == MAP_FAILED) {
-      perror("Error al mapear la memoria.");
+      perror("create_shm");
       exit(1);
 	  }
 
@@ -39,20 +39,37 @@ mem_id create_shm(config_init_t * cfg) {
     queue_create(&context->queue_d, cfg->queue_sample_length);
     queue_create(&context->queue_s, cfg->queue_sample_length);
 
-    return cfg->_id.c_str();
+    return l;
 }
 
-mem_shared_t * read_shm(mem_id id, config_init_t * cfg) {
-    int fd = shm_open(id, O_RDONLY, 0666);
+mem_shared_t * read_shm(const char * id, size_t size) {
+    int fd;
+    fd = shm_open(id, O_RDWR, 0644); // O_RDONLY Solo lectura
 
-    size_t l = sizeof(mem_shared_t) + (cfg->entries * sizeof(queue_t *));
-    mem_shared_t * base = (mem_shared_t *)mmap(0, l, PROT_READ, MAP_SHARED, fd, 0);
+    size_t l = sizeof(mem_shared_t) + (size * sizeof(queue_t *));
+    mem_shared_t * base = (mem_shared_t *)mmap(0, l, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (base == MAP_FAILED) {
-      perror("Error al mapear (read_shm) la memoria.");
+      perror("read_shm");
       exit(1);
     }
 
     return base;
+}
+
+size_t * shm_context_size() {
+  int fd = shm_open(SHM_CONTEXT, O_CREAT | O_RDWR, 0644);
+  if (fd < 0) {
+      perror("shm_context_size");
+      exit(1);
+  }
+
+  size_t * cnt = (size_t *)mmap(NULL, sizeof(size_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  if (cnt == MAP_FAILED) {
+    perror("read_shm");
+    exit(1);
+  }
+
+  return cnt;
 }
 
 int queue_create(queue_t * q, unsigned int size) {

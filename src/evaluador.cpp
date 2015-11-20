@@ -1,16 +1,9 @@
-#include <iostream>
-#include <string>
-#include <vector>
-#include <functional>
-#include <unistd.h>
-#include <getopt.h>
-#include <string.h>
-#include <stdlib.h>
-
+#include "helper.h"
 #include "console.h"
 #include "config.h"
 #include "default.h"
 #include "shared_data.h"
+#include "core.h"
 
 using namespace std;
 
@@ -154,27 +147,6 @@ int parse_opts(
   return 0;
 }
 
-void split(const string& s, char c, vector<string>& v) {
-   string::size_type i = 0;
-   string::size_type j = s.find(c); //Posicion donde encuentra char c
-
-   while (j != string::npos) {
-      v.push_back(s.substr(i, j-i));
-      i = ++j;
-      j = s.find(c, j);
-
-      if (j == string::npos)
-         v.push_back(s.substr(i, s.length()));
-   }
-}
-
-bool isInteger(const string& s) {
-   char * p ;
-   strtol(s.c_str(), &p, 10) ;
-
-   return (*p == 0) ;
-}
-
 void ctrl(string shared_memory) {
   Console cons(CONTROL, shared_memory);
   cons.start();
@@ -189,34 +161,26 @@ void init(config_init_t * preset) {
   cout << "Blood react: " << preset->blood_reactive << endl;
   cout << "Detrite react: " << preset->detrit_reactive << endl;
 
-  mem_id id;
+  size_t * size_mem = shm_context_size();
 
-  id = create_shm(preset);
+  *size_mem = create_shm(preset);
 
-  mem_shared_t * r = read_shm(id, preset);
+  mem_shared_t * r = read_shm(preset->_id.c_str(), *size_mem);
+
+  pthread_t * threads = new pthread_t[preset->entries];
+
+  for (int i = 0; i < preset->entries; ++i) {
+    args_t arg;
+    arg._id = (unsigned short)i;
+
+    pthread_create(&threads[i], NULL, kernel, &arg);
+    pthread_join(threads[i], NULL);
+  }
+
+  for (;;);
 
   delete preset;
 }
-
-bool validarReg(string line) {
-  vector<string> v;
-
-  split(line, ' ', v);
-
-    if (v.size() == 3) {
-      int inBandeja;
-      int inCantidad;
-      char inMuestra;
-      if (isInteger(v[0]) && (atoi(v[2].c_str()) > 0)) {
-        if (isInteger(v[2]) && (atoi(v[2].c_str()) > 0)) {
-          if (strcmp(v[1].c_str(), "B") == 0 || strcmp(v[1].c_str(), "D") == 0  || strcmp(v[1].c_str(), "S") == 0) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
 
 void regi(string shared_memory, vector<string> files, bool isIterative) {
   int inBandeja;
