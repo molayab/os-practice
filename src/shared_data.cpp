@@ -63,6 +63,7 @@ size_t * shm_context_size() {
       exit(1);
   }
 
+  ftruncate(fd, sizeof(size_t));
   size_t * cnt = (size_t *)mmap(NULL, sizeof(size_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (cnt == MAP_FAILED) {
     perror("read_shm");

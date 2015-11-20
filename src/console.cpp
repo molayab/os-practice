@@ -40,6 +40,8 @@ void Console::registe() {
 
     mem_shared_t * mem;
     mem = read_shm(context.c_str(), size_mem);
+
+    std::cout << "tamano: " << size_mem << std::endl;
   }
 }
 
