@@ -3,8 +3,6 @@
 void * kernel(void * f) {
   args_t args = *((args_t *)f);
 
-  std::cout << "HELLO" << args._id << std::endl;
-
 
   size_t len = shm_size("mem_size", NULL);
   void * mem = shm_context(args.memory, len);
@@ -22,12 +20,15 @@ void * kernel(void * f) {
   sem_wait(&auxes[args._id].full);
   sem_wait(&auxes[args._id].mutex);
 
+
+  std::cout << "Recv: " << *samples[pos] << std::endl;
   //Seccion critica - Consumidor
   int pos = (auxes[args._id].out * shm_config->entries) + args._id;
   auxes[args._id].out++;
   if (auxes[args._id].out >= shm_config->queue_input_length) {
     auxes[args._id].out = 0;
   }
+
   //Fin seccion critica - consumidor
   sem_post(&auxes[args._id].mutex);
   sem_post(&auxes[args._id].empty);
