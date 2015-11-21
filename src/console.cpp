@@ -36,12 +36,27 @@ void Console::registe() {
     sample.kind = v[1].c_str()[0];
     sample.quantity = atoi(v[2].c_str());
 
-    size_t size_mem = *(shm_context_size());
+    size_t len = shm_size("mem_size", NULL);
+    void * mem = shm_context(context.c_str(), len);
 
-    mem_shared_t * mem;
-    mem = read_shm(context.c_str(), size_mem);
+    config_init_t * shm_config = (config_init_t *)mem;
 
-    std::cout << "tamano: " << size_mem << std::endl;
+    shm_config += 1;
+
+    aux_entrie_var_t * auxes = (aux_entrie_var_t *)shm_config;
+
+    auxes += shm_config->entries;
+
+    sample_t * samples = (sample_t *)auxes;
+
+    samples[(auxes[sample.queue].in * shm_config->entries) + sample.queue] = sample;
+    auxes[sample.queue].in++;
+    if (auxes[sample.queue].in >= shm_config->queue_input_length) {
+      auxes[sample.queue].in = 0;
+    }
+
+
+    int i = 0;
   }
 }
 

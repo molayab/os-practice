@@ -21,7 +21,7 @@ typedef struct config_init_t {
   int blood_reactive;
   int skin_reactive;
   int detrit_reactive;
-  std::string _id;
+  char * _id;
 } config_init_t;
 
 #endif

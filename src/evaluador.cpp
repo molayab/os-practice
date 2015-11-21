@@ -43,8 +43,7 @@ int parse_opts(
         preset->queue_output_length = (unsigned int)value;
       }
       else if (strcmp(argv[opts], "-n") == 0 && argv[opts + 1] != NULL) {
-        string str(argv[opts + 1]);
-        preset->_id = str;
+        preset->_id = argv[opts + 1];
       }
       else if (strcmp(argv[opts], "-b") == 0 && argv[opts + 1] != NULL) {
         preset->blood_reactive = atoi(argv[opts + 1]);
@@ -161,13 +160,23 @@ void init(config_init_t * preset) {
   cout << "Blood react: " << preset->blood_reactive << endl;
   cout << "Detrite react: " << preset->detrit_reactive << endl;
 
-  size_t * size_mem = shm_context_size();
+  size_t len = shm_size("mem_size", preset);
+  int fd = shm_create(preset->_id, len);
 
-  *size_mem = create_shm(preset);
+  void * mem = shm_context(preset->_id, len);
 
-  mem_shared_t * r = read_shm(preset->_id.c_str(), *size_mem);
+  config_init_t * shm_config = (config_init_t *)mem;
+  *shm_config = *preset;
+
+  aux_entrie_var_t * auxes = (aux_entrie_var_t *)++shm_config;
+
+  for (int i = 0; i < preset->entries; ++i) {
+    auxes[i].in = 0;
+  }
 
   pthread_t * threads = new pthread_t[preset->entries];
+
+
 
   for (int i = 0; i < preset->entries; ++i) {
     args_t arg;
@@ -177,7 +186,16 @@ void init(config_init_t * preset) {
     pthread_join(threads[i], NULL);
   }
 
-  for (;;);
+  string line;
+  for (;;) {
+    getline(std::cin, line);
+
+    if (!line.empty()) continue;
+
+    close(fd);
+    shm_unlink(preset->_id);
+    break;
+  }
 
   delete preset;
 }
