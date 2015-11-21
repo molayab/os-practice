@@ -5,9 +5,13 @@
 // C
 #include <pthread.h>
 #include <stdlib.h>
+#include <semaphore.h>
+
+#include "shared_data.h"
 
 typedef struct args_t {
   unsigned short _id;
+  char * memory;
 } args_t;
 
 void * kernel(void *);

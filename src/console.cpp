@@ -49,12 +49,18 @@ void Console::registe() {
 
     sample_t * samples = (sample_t *)auxes;
 
+    sem_wait(&auxes[sample.queue].empty);
+    sem_wait(&auxes[sample.queue].mutex);
+
+    //Seccion critica - Productor
     samples[(auxes[sample.queue].in * shm_config->entries) + sample.queue] = sample;
     auxes[sample.queue].in++;
     if (auxes[sample.queue].in >= shm_config->queue_input_length) {
       auxes[sample.queue].in = 0;
     }
-
+    // Fin seccion critica - Productor
+    sem_post(&auxes[sample.queue].mutex);
+    sem_post(&auxes[sample.queue].full);
 
     int i = 0;
   }

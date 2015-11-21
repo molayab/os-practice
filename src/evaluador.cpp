@@ -172,6 +172,24 @@ void init(config_init_t * preset) {
 
   for (int i = 0; i < preset->entries; ++i) {
     auxes[i].in = 0;
+    auxes[i].out = 0;
+
+    sem_init(&auxes[i].full, 0, 0);
+    sem_init(&auxes[i].empty, 0, preset->queue_input_length);
+    sem_init(&auxes[i].mutex, 0, 1);
+  }
+
+  auxes += (preset->entries + (preset->entries*preset->queue_input_length));
+
+  aux_entrie_var_t * aux_inn = (aux_entrie_var_t *)auxes;
+
+  for (int i = 0; i<3; i++) {
+    aux_inn[i].in = 0;
+    aux_inn[i].out = 0;
+
+    sem_init(&aux_inn[i].full, 0, 0);
+    sem_init(&aux_inn[i].empty, 0, preset->queue_sample_length);
+    sem_init(&aux_inn[i].mutex, 0, 1);
   }
 
   pthread_t * threads = new pthread_t[preset->entries];
@@ -181,6 +199,7 @@ void init(config_init_t * preset) {
   for (int i = 0; i < preset->entries; ++i) {
     args_t arg;
     arg._id = (unsigned short)i;
+    arg.memory = preset->_id;
 
     pthread_create(&threads[i], NULL, kernel, &arg);
     pthread_join(threads[i], NULL);

@@ -8,6 +8,7 @@
 // C
 #include <pthread.h>
 #include <stdlib.h>
+#include <semaphore.h>
 
 typedef enum console_type_t {
   CONTROL,

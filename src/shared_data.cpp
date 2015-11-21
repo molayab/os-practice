@@ -55,8 +55,10 @@ size_t shm_size(const char * name, config_init_t * conf) {
 
     size_t s_entries = (sizeof(sample_t) * conf->queue_input_length * conf->entries);
     size_t s_aux_ent = (sizeof(aux_entrie_var_t) * conf->entries);
+    size_t s_aux_inn = (sizeof(aux_entrie_var_t) * 3);
+    size_t s_samples = (sizeof(sample_t) * conf->queue_sample_length * 3);
 
-    size_t len = (sizeof(config_init_t) + s_aux_ent + s_entries);
+    size_t len = (sizeof(config_init_t) + s_aux_ent + s_entries + s_aux_inn + s_samples);
     *c = len;
   }
 
