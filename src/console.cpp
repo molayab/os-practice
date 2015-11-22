@@ -2,6 +2,7 @@
 #include "helper.h"
 #include "shared_data.h"
 
+
 Console::Console(console_type_t kind, std::string context) : kind(kind), context(context) { }
 
 Console::~Console() { }
@@ -54,6 +55,7 @@ void Console::registe() {
 
     //Seccion critica - Productor
     samples[(auxes[sample.queue].in * shm_config->entries) + sample.queue] = sample;
+    std::cout << "Sample: " << sample.kind << std::endl;
     auxes[sample.queue].in++;
     if (auxes[sample.queue].in >= shm_config->queue_input_length) {
       auxes[sample.queue].in = 0;

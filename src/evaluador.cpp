@@ -174,9 +174,9 @@ void init(config_init_t * preset) {
     auxes[i].in = 0;
     auxes[i].out = 0;
 
-    sem_init(&auxes[i].full, 0, 0);
-    sem_init(&auxes[i].empty, 0, preset->queue_input_length);
-    sem_init(&auxes[i].mutex, 0, 1);
+    sem_init(&auxes[i].full, 1, 0);
+    sem_init(&auxes[i].empty, 1, preset->queue_input_length);
+    sem_init(&auxes[i].mutex, 1, 1);
   }
 
   auxes += (preset->entries + (preset->entries*preset->queue_input_length));
@@ -202,6 +202,9 @@ void init(config_init_t * preset) {
     arg.memory = preset->_id;
 
     pthread_create(&threads[i], NULL, kernel, &arg);
+  }
+
+  for (int i = 0; i < preset->entries; ++i) {
     pthread_join(threads[i], NULL);
   }
 

@@ -17,13 +17,16 @@ void * kernel(void * f) {
 
   sample_t * samples = (sample_t *)auxes;
 
+  std::cout << "args._id: " << args._id << std::endl;
+
   sem_wait(&auxes[args._id].full);
   sem_wait(&auxes[args._id].mutex);
 
 
-  std::cout << "Recv: " << *samples[pos] << std::endl;
   //Seccion critica - Consumidor
   int pos = (auxes[args._id].out * shm_config->entries) + args._id;
+
+  std::cout << "Recv: " << samples[pos].kind << std::endl;
   auxes[args._id].out++;
   if (auxes[args._id].out >= shm_config->queue_input_length) {
     auxes[args._id].out = 0;
