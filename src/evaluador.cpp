@@ -194,8 +194,6 @@ void init(config_init_t * preset) {
 
   pthread_t * threads = new pthread_t[preset->entries];
 
-
-
   for (int i = 0; i < preset->entries; ++i) {
     args_t arg;
     arg._id = (unsigned short)i;
@@ -208,16 +206,8 @@ void init(config_init_t * preset) {
     pthread_join(threads[i], NULL);
   }
 
-  string line;
-  for (;;) {
-    getline(std::cin, line);
-
-    if (!line.empty()) continue;
-
-    close(fd);
-    shm_unlink(preset->_id);
-    break;
-  }
+  close(fd);
+  shm_unlink(preset->_id);
 
   delete preset;
 }
