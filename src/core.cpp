@@ -9,6 +9,8 @@ void * kernel(void * f) {
 
   config_init_t * shm_config = (config_init_t *)mem;
 
+  config_init_t c_shm_config = *shm_config;
+
   shm_config += 1;
 
   aux_entrie_var_t * auxes = (aux_entrie_var_t *)shm_config;
@@ -17,24 +19,27 @@ void * kernel(void * f) {
 
   sample_t * samples = (sample_t *)auxes;
 
-  std::cout << "args._id: " << args._id << std::endl;
+  int pos;
 
+for(;;) {
   sem_wait(&auxes[args._id].full);
   sem_wait(&auxes[args._id].mutex);
 
+  pos = ((args._id*c_shm_config.queue_input_length)+auxes[args._id].out);
+  std::cout << "args._id: " << args._id << "pos: " << pos << std::endl;
 
   //Seccion critica - Consumidor
-  int pos = (auxes[args._id].out * shm_config->entries) + args._id;
-
   std::cout << "Recv: " << samples[pos].kind << std::endl;
   auxes[args._id].out++;
-  if (auxes[args._id].out >= shm_config->queue_input_length) {
+  if (auxes[args._id].out >= c_shm_config.queue_input_length) {
     auxes[args._id].out = 0;
   }
 
   //Fin seccion critica - consumidor
   sem_post(&auxes[args._id].mutex);
   sem_post(&auxes[args._id].empty);
+
+}
 
 
   samples += shm_config->entries * shm_config->queue_input_length;

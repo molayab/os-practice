@@ -42,6 +42,8 @@ void Console::registe() {
 
     config_init_t * shm_config = (config_init_t *)mem;
 
+    config_init_t c_shm_config = *shm_config;
+
     shm_config += 1;
 
     aux_entrie_var_t * auxes = (aux_entrie_var_t *)shm_config;
@@ -50,14 +52,17 @@ void Console::registe() {
 
     sample_t * samples = (sample_t *)auxes;
 
+    int pos;
+
     sem_wait(&auxes[sample.queue].empty);
     sem_wait(&auxes[sample.queue].mutex);
 
     //Seccion critica - Productor
-    samples[(auxes[sample.queue].in * shm_config->entries) + sample.queue] = sample;
+    pos = ((sample.queue*c_shm_config.queue_input_length)+auxes[sample.queue].in);
+    samples[pos] = sample;
     std::cout << "Sample: " << sample.kind << std::endl;
     auxes[sample.queue].in++;
-    if (auxes[sample.queue].in >= shm_config->queue_input_length) {
+    if (auxes[sample.queue].in >= c_shm_config.queue_input_length) {
       auxes[sample.queue].in = 0;
     }
     // Fin seccion critica - Productor

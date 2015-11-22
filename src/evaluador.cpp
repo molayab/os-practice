@@ -206,8 +206,16 @@ void init(config_init_t * preset) {
     pthread_join(threads[i], NULL);
   }
 
-  close(fd);
-  shm_unlink(preset->_id);
+  string line;
+  for (;;) {
+    getline(std::cin, line);
+
+    if (!line.empty()) continue;
+
+    close(fd);
+    shm_unlink(preset->_id);
+    break;
+  }
 
   delete preset;
 }
