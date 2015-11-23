@@ -30,7 +30,7 @@ bool validarReg(std::string line) {
     int inBandeja;
     int inCantidad;
     char inMuestra;
-    if (isInteger(v[0]) && (atoi(v[2].c_str()) > 0)) {
+    if (isInteger(v[0]) && (atoi(v[0].c_str()) >= 0)) {
       if (isInteger(v[2]) && (atoi(v[2].c_str()) > 0)) {
         if (strcmp(v[1].c_str(), "B") == 0 || strcmp(v[1].c_str(), "D") == 0  || strcmp(v[1].c_str(), "S") == 0) {
           return true;

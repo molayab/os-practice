@@ -2,6 +2,7 @@
 
 // Crear la memoria compartida... hace el truncacate
 int shm_create(const char * n, size_t size) {
+  shm_unlink(n);
   int fd = shm_open(n, O_CREAT | O_RDWR, 0664);
 
   if (fd < 0) {
@@ -53,8 +54,8 @@ size_t shm_size(const char * name, config_init_t * conf) {
 
   if (conf != NULL) {
 
-    size_t s_entries = (sizeof(sample_t) * conf->queue_input_length * conf->entries);
     size_t s_aux_ent = (sizeof(aux_entrie_var_t) * conf->entries);
+    size_t s_entries = (sizeof(sample_t) * conf->queue_input_length * conf->entries);
     size_t s_aux_inn = (sizeof(aux_entrie_var_t) * 3);
     size_t s_samples = (sizeof(sample_t) * conf->queue_sample_length * 3);
 
@@ -62,5 +63,6 @@ size_t shm_size(const char * name, config_init_t * conf) {
     *c = len;
   }
 
+  close(fd);
   return *c;
 }

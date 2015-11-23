@@ -2,7 +2,9 @@
 
 void * kernel(void * f) {
   args_t args = *((args_t *)f);
+  std::cout << args._id << " Created. Process" << std::endl;
 
+for(;;) {
 
   size_t len = shm_size("mem_size", NULL);
   void * mem = shm_context(args.memory, len);
@@ -11,17 +13,14 @@ void * kernel(void * f) {
 
   config_init_t c_shm_config = *shm_config;
 
-  shm_config += 1;
+  aux_entrie_var_t * auxes = (aux_entrie_var_t *)shm_config + 1;
 
-  aux_entrie_var_t * auxes = (aux_entrie_var_t *)shm_config;
+  aux_entrie_var_t * afg = auxes;
 
-  auxes += shm_config->entries;
+  sample_t * samples = (sample_t *)afg + shm_config->entries;
 
-  sample_t * samples = (sample_t *)auxes;
+int pos;
 
-  int pos;
-
-for(;;) {
   sem_wait(&auxes[args._id].full);
   sem_wait(&auxes[args._id].mutex);
 
@@ -38,11 +37,9 @@ for(;;) {
   //Fin seccion critica - consumidor
   sem_post(&auxes[args._id].mutex);
   sem_post(&auxes[args._id].empty);
-
 }
 
-
-  samples += shm_config->entries * shm_config->queue_input_length;
+/*  samples += shm_config->entries * shm_config->queue_input_length;
   aux_entrie_var_t * inner_auxes = (aux_entrie_var_t *)samples;
 
   inner_auxes += 3;
@@ -75,6 +72,7 @@ for(;;) {
      break;
   }
 
+*/
   // SIGNAL
 
   return NULL;

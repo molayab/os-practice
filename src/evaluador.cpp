@@ -168,7 +168,8 @@ void init(config_init_t * preset) {
   config_init_t * shm_config = (config_init_t *)mem;
   *shm_config = *preset;
 
-  aux_entrie_var_t * auxes = (aux_entrie_var_t *)++shm_config;
+  aux_entrie_var_t * auxes = (aux_entrie_var_t *)shm_config + 1;
+
 
   for (int i = 0; i < preset->entries; ++i) {
     auxes[i].in = 0;
@@ -179,11 +180,11 @@ void init(config_init_t * preset) {
     sem_init(&auxes[i].mutex, 1, 1);
   }
 
-  auxes += (preset->entries + (preset->entries*preset->queue_input_length));
+  sample_t * samples = (sample_t *)auxes + preset->entries;
 
-  aux_entrie_var_t * aux_inn = (aux_entrie_var_t *)auxes;
+  aux_entrie_var_t * aux_inn = (aux_entrie_var_t *)samples + (preset->entries*preset->queue_input_length);
 
-  for (int i = 0; i<3; i++) {
+  for (int i = 0; i<3; ++i) {
     aux_inn[i].in = 0;
     aux_inn[i].out = 0;
 
@@ -196,28 +197,19 @@ void init(config_init_t * preset) {
 
   for (int i = 0; i < preset->entries; ++i) {
     args_t arg;
-    arg._id = (unsigned short)i;
+    arg._id = i;
     arg.memory = preset->_id;
 
     pthread_create(&threads[i], NULL, kernel, &arg);
+    cout << i << " Will. Process" << endl;
+    sleep(1);
   }
 
-  for (int i = 0; i < preset->entries; ++i) {
-    pthread_join(threads[i], NULL);
-  }
-
-  string line;
-  for (;;) {
-    getline(std::cin, line);
-
-    if (!line.empty()) continue;
-
-    close(fd);
-    shm_unlink(preset->_id);
-    break;
-  }
+  close(fd);
 
   delete preset;
+
+  for (;;);
 }
 
 void regi(string shared_memory, vector<string> files, bool isIterative) {

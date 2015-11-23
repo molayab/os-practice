@@ -10,10 +10,10 @@
 #include "shared_data.h"
 
 typedef struct args_t {
-  unsigned short _id;
-  char * memory;
+   int _id;
+   char * memory;
 } args_t;
 
 void * kernel(void *);
 
-#endif CORE_H
+#endif
