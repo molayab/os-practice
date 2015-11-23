@@ -188,10 +188,24 @@ void init(config_init_t * preset) {
     aux_inn[i].in = 0;
     aux_inn[i].out = 0;
 
-    sem_init(&aux_inn[i].full, 0, 0);
-    sem_init(&aux_inn[i].empty, 0, preset->queue_sample_length);
-    sem_init(&aux_inn[i].mutex, 0, 1);
+    sem_init(&aux_inn[i].full, 1, 0);
+    sem_init(&aux_inn[i].empty, 1, preset->queue_sample_length);
+    sem_init(&aux_inn[i].mutex, 1, 1);
   }
+
+  sample_t * sample_inn = (sample_t *)aux_inn + 3;
+
+  aux_entrie_var_t * aux_out = (aux_entrie_var_t *)sample_inn +(3*preset->queue_sample_length);
+
+  sample_output_t * sample_output = (sample_output_t *)aux_out +1;
+
+  aux_out[0].in = 0;
+  aux_out[0].out = 0;
+
+  sem_init(&aux_out[0].full, 1, 0);
+  sem_init(&aux_out[0].empty, 1, preset->queue_output_length);
+  sem_init(&aux_out[0].mutex, 1, 1);
+
 
   pthread_t * threads = new pthread_t[preset->entries];
 
@@ -202,6 +216,18 @@ void init(config_init_t * preset) {
 
     pthread_create(&threads[i], NULL, kernel, &arg);
     cout << i << " Will. Process" << endl;
+    sleep(1);
+  }
+
+  pthread_t * threads_inn = new pthread_t[3];
+
+  for (int i = 0; i < 3; ++i) {
+    args_t arg;
+    arg._id = i;
+    arg.memory = preset->_id;
+
+    pthread_create(&threads_inn[i], NULL, kernel_inn, &arg);
+    cout << i << " Will. Process_inn" << endl;
     sleep(1);
   }
 

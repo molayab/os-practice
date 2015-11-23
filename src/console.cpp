@@ -16,7 +16,7 @@ void Console::start() {
     this
   );
 
-  //pthread_join(this->thread, NULL);
+  pthread_join(this->thread, NULL);
 }
 
 void Console::control() {

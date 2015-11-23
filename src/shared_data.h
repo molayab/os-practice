@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 typedef struct sample_t {
+  int _id;
   int queue;
   char kind;
   int quantity;
@@ -26,6 +27,11 @@ typedef struct aux_entrie_var_t {
   sem_t empty;
   sem_t full;
 } aux_entrie_var_t;
+
+typedef struct sample_output_t {
+  sample_t sample;
+  char inf;
+}
 
 // Crear la memoria compartida... hace el truncacate
 int shm_create(const char *, size_t);
