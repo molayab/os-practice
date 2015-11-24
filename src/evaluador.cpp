@@ -223,18 +223,6 @@ void init(config_init_t * preset) {
     sleep(1);
   }
 
-  pthread_t * threads_inn = new pthread_t[3];
-
-  for (int i = 0; i < 3; ++i) {
-    args_t arg;
-    arg._id = i;
-    arg.memory = preset->_id;
-
-    pthread_create(&threads_inn[i], NULL, kernel_inn, &arg);
-    cout << i << " Will. Process_inn" << endl;
-    sleep(1);
-  }
-
   close(fd);
 
   delete preset;

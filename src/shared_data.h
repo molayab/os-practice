@@ -31,7 +31,7 @@ typedef struct aux_entrie_var_t {
 typedef struct sample_output_t {
   sample_t sample;
   char inf;
-}
+} sample_output_t;
 
 // Crear la memoria compartida... hace el truncacate
 int shm_create(const char *, size_t);
