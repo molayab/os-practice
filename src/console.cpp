@@ -37,37 +37,28 @@ void Console::registe() {
     sample.quantity = atoi(v[2].c_str());
 
     size_t len = shm_size("mem_size", NULL);
-    void * mem = shm_context(context.c_str(), len);
+    config_init_t * mem = (config_init_t *)shm_context(context.c_str(), len);
+    config_init_t * shm_config = mem;
 
-    config_init_t * shm_config = (config_init_t *)mem;
-
-    config_init_t c_shm_config = *shm_config;
-
-    aux_entrie_var_t * auxes = (aux_entrie_var_t *)shm_config + 1;
-
-    aux_entrie_var_t * afg = auxes;
-
-    sample_t * samples = (sample_t *)afg + shm_config->entries;
-
-    int pos;
-    std::cout << "queue sample: " << sample.queue << std::endl;
+    aux_entrie_var_t * auxes = (aux_entrie_var_t *)mem + 1;
 
     sem_wait(&auxes[sample.queue].empty);
     sem_wait(&auxes[sample.queue].mutex);
 
-    //Seccion critica - Productor
-    pos = ((sample.queue*c_shm_config.queue_input_length)+auxes[sample.queue].in);
-    samples[pos] = sample;
-    std::cout << "Sample: " << samples[pos].kind << std::endl;
+    sample_t * samples = (sample_t *)((shm_config + 1) + shm_config->entries);
+    //samples[(sample.queue * shm_config->entries) + auxes[sample.queue].in] = sample;
+    samples[(sample.queue * shm_config->queue_input_length) + auxes[sample.queue].in].queue = sample.queue;
+    samples[(sample.queue * shm_config->queue_input_length) + auxes[sample.queue].in].kind = sample.kind;
+    samples[(sample.queue * shm_config->queue_input_length) + auxes[sample.queue].in].quantity = sample.quantity;
+
     auxes[sample.queue].in++;
-    if (auxes[sample.queue].in >= c_shm_config.queue_input_length) {
+    if (auxes[sample.queue].in >= shm_config->queue_input_length) {
       auxes[sample.queue].in = 0;
     }
+
     // Fin seccion critica - Productor
     sem_post(&auxes[sample.queue].mutex);
-    //std::cout << "mutex: " << samples[pos].kind << std::endl;
     sem_post(&auxes[sample.queue].full);
-
   }
 }
 

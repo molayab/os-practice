@@ -5,6 +5,8 @@
 #include "shared_data.h"
 #include "core.h"
 
+#include <fstream>
+
 using namespace std;
 
 // Para recordar: tipo (*funcion)(arg1, arg2, argn) <- para hacer callbacks
@@ -163,59 +165,61 @@ void init(config_init_t * preset) {
   size_t len = shm_size("mem_size", preset);
   int fd = shm_create(preset->_id, len);
 
-  void * mem = shm_context(preset->_id, len);
+  config_init_t * mem = (config_init_t *)shm_context(preset->_id, len);
+  config_init_t * shm_config = mem;
 
-  config_init_t * shm_config = (config_init_t *)mem;
   *shm_config = *preset;
 
-  aux_entrie_var_t * auxes = (aux_entrie_var_t *)shm_config + 1;
+  aux_entrie_var_t * auxes = (aux_entrie_var_t *)mem + 1;
 
-
-  for (int i = 0; i < preset->entries; ++i) {
+  for (int i = 0; i < shm_config->entries; ++i) {
     auxes[i].in = 0;
     auxes[i].out = 0;
 
     sem_init(&auxes[i].full, 1, 0);
-    sem_init(&auxes[i].empty, 1, preset->queue_input_length);
+    sem_init(&auxes[i].empty, 1, shm_config->queue_input_length);
     sem_init(&auxes[i].mutex, 1, 1);
   }
 
-  sample_t * samples = (sample_t *)auxes + preset->entries;
+  sample_t * samples = (sample_t *)((shm_config + 1) + shm_config->entries);
 
-  aux_entrie_var_t * aux_inn = (aux_entrie_var_t *)samples + (preset->entries*preset->queue_input_length);
+  aux_entrie_var_t * aux_inn = (aux_entrie_var_t *)((shm_config + 1) + (shm_config->entries) + (shm_config->entries * shm_config->queue_input_length));
 
   for (int i = 0; i<3; ++i) {
     aux_inn[i].in = 0;
     aux_inn[i].out = 0;
 
     sem_init(&aux_inn[i].full, 1, 0);
-    sem_init(&aux_inn[i].empty, 1, preset->queue_sample_length);
+    sem_init(&aux_inn[i].empty, 1, shm_config->queue_sample_length);
     sem_init(&aux_inn[i].mutex, 1, 1);
   }
 
-  sample_t * sample_inn = (sample_t *)aux_inn + 3;
-
-  aux_entrie_var_t * aux_out = (aux_entrie_var_t *)sample_inn +(3*preset->queue_sample_length);
-
-  sample_output_t * sample_output = (sample_output_t *)aux_out +1;
-
-  aux_out[0].in = 0;
-  aux_out[0].out = 0;
-
-  sem_init(&aux_out[0].full, 1, 0);
-  sem_init(&aux_out[0].empty, 1, preset->queue_output_length);
-  sem_init(&aux_out[0].mutex, 1, 1);
+  sample_t * inner_samples = (sample_t *) aux_inn + 3;
 
 
-  pthread_t * threads = new pthread_t[preset->entries];
+  pthread_t * threads = new pthread_t[shm_config->entries];
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-  for (int i = 0; i < preset->entries; ++i) {
+  for (int i = 0; i < shm_config->entries; ++i) {
     args_t arg;
     arg._id = i;
-    arg.memory = preset->_id;
+    arg.memory = shm_config->_id;
+    arg.mutex = &mutex;
 
     pthread_create(&threads[i], NULL, kernel, &arg);
-    cout << i << " Will. Process" << endl;
+    sleep(1);
+  }
+
+  pthread_t * threads_inn = new pthread_t[3];
+  pthread_mutex_t mutex_inn = PTHREAD_MUTEX_INITIALIZER;
+
+  for (int i = 0; i < 3; ++i) {
+    args_t arg;
+    arg._id = i;
+    arg.memory = shm_config->_id;
+    arg.mutex = &mutex_inn;
+
+    pthread_create(&threads_inn[i], NULL, kernel_inn, &arg);
     sleep(1);
   }
 
@@ -235,7 +239,7 @@ void init(config_init_t * preset) {
 
   delete preset;
 
-  for (;;);
+  for(;;);
 }
 
 void regi(string shared_memory, vector<string> files, bool isIterative) {
@@ -251,6 +255,48 @@ void regi(string shared_memory, vector<string> files, bool isIterative) {
   } else {
     for (int i = 0; i < files.size(); ++i) {
       cout << files[i] << endl;
+
+      ifstream file(files[i].c_str());
+
+      while(!file.eof()) {
+        std::string s;
+        getline(file, s);
+
+        if (validarReg(s)) {
+          std::vector<std::string> v;
+
+          split(s, ' ', v);
+
+          sample_t sample;
+          sample.queue = atoi(v[0].c_str());
+          sample.kind = v[1].c_str()[0];
+          sample.quantity = atoi(v[2].c_str());
+
+          size_t len = shm_size("mem_size", NULL);
+          config_init_t * mem = (config_init_t *)shm_context(shared_memory.c_str(), len);
+          config_init_t * shm_config = mem;
+
+          aux_entrie_var_t * auxes = (aux_entrie_var_t *)mem + 1;
+
+          sem_wait(&auxes[sample.queue].empty);
+          sem_wait(&auxes[sample.queue].mutex);
+
+          sample_t * samples = (sample_t *)((shm_config + 1) + shm_config->entries);
+          //samples[(sample.queue * shm_config->entries) + auxes[sample.queue].in] = sample;
+          samples[(sample.queue * shm_config->queue_input_length) + auxes[sample.queue].in].queue = sample.queue;
+          samples[(sample.queue * shm_config->queue_input_length) + auxes[sample.queue].in].kind = sample.kind;
+          samples[(sample.queue * shm_config->queue_input_length) + auxes[sample.queue].in].quantity = sample.quantity;
+
+          auxes[sample.queue].in++;
+          if (auxes[sample.queue].in >= shm_config->queue_input_length) {
+            auxes[sample.queue].in = 0;
+          }
+
+          // Fin seccion critica - Productor
+          sem_post(&auxes[sample.queue].mutex);
+          sem_post(&auxes[sample.queue].full);
+        }
+      }
     }
   }
 }

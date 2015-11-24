@@ -12,6 +12,7 @@
 typedef struct args_t {
    int _id;
    char * memory;
+   pthread_mutex_t * mutex;
 } args_t;
 
 void * kernel(void *);
