@@ -163,45 +163,61 @@ void init(config_init_t * preset) {
   size_t len = shm_size("mem_size", preset);
   int fd = shm_create(preset->_id, len);
 
-  void * mem = shm_context(preset->_id, len);
+  config_init_t * mem = (config_init_t *)shm_context(preset->_id, len);
+  config_init_t * shm_config = mem;
 
-  config_init_t * shm_config = (config_init_t *)mem;
   *shm_config = *preset;
 
-  aux_entrie_var_t * auxes = (aux_entrie_var_t *)shm_config + 1;
+  aux_entrie_var_t * auxes = (aux_entrie_var_t *)mem + 1;
 
-
-  for (int i = 0; i < preset->entries; ++i) {
+  for (int i = 0; i < shm_config->entries; ++i) {
     auxes[i].in = 0;
     auxes[i].out = 0;
 
     sem_init(&auxes[i].full, 1, 0);
-    sem_init(&auxes[i].empty, 1, preset->queue_input_length);
+    sem_init(&auxes[i].empty, 1, shm_config->queue_input_length);
     sem_init(&auxes[i].mutex, 1, 1);
   }
 
-  sample_t * samples = (sample_t *)auxes + preset->entries;
+  sample_t * samples = (sample_t *)((shm_config + 1) + shm_config->entries);
 
-  aux_entrie_var_t * aux_inn = (aux_entrie_var_t *)samples + (preset->entries*preset->queue_input_length);
+  aux_entrie_var_t * aux_inn = (aux_entrie_var_t *)((shm_config + 1) + (shm_config->entries) + (shm_config->entries * shm_config->queue_input_length));
 
   for (int i = 0; i<3; ++i) {
     aux_inn[i].in = 0;
     aux_inn[i].out = 0;
 
-    sem_init(&aux_inn[i].full, 0, 0);
-    sem_init(&aux_inn[i].empty, 0, preset->queue_sample_length);
-    sem_init(&aux_inn[i].mutex, 0, 1);
+    sem_init(&aux_inn[i].full, 1, 0);
+    sem_init(&aux_inn[i].empty, 1, shm_config->queue_sample_length);
+    sem_init(&aux_inn[i].mutex, 1, 1);
   }
 
-  pthread_t * threads = new pthread_t[preset->entries];
+  sample_t * inner_samples = (sample_t *) aux_inn + 3;
 
-  for (int i = 0; i < preset->entries; ++i) {
+
+  pthread_t * threads = new pthread_t[shm_config->entries];
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+  for (int i = 0; i < shm_config->entries; ++i) {
     args_t arg;
     arg._id = i;
-    arg.memory = preset->_id;
+    arg.memory = shm_config->_id;
+    arg.mutex = &mutex;
 
     pthread_create(&threads[i], NULL, kernel, &arg);
-    cout << i << " Will. Process" << endl;
+    sleep(1);
+  }
+
+  pthread_t * threads_inn = new pthread_t[3];
+  pthread_mutex_t mutex_inn = PTHREAD_MUTEX_INITIALIZER;
+
+  for (int i = 0; i < 3; ++i) {
+    args_t arg;
+    arg._id = i;
+    arg.memory = shm_config->_id;
+    arg.mutex = &mutex_inn;
+
+    pthread_create(&threads_inn[i], NULL, kernel_inn, &arg);
     sleep(1);
   }
 
@@ -209,7 +225,7 @@ void init(config_init_t * preset) {
 
   delete preset;
 
-  for (;;);
+  for(;;);
 }
 
 void regi(string shared_memory, vector<string> files, bool isIterative) {
