@@ -102,8 +102,18 @@ int parse_opts(
       }
 
       cout << "evaluara: " << shared_memory << endl;
-      //TODO callback REPO
-    //config->mode = config_t::REPO;
+
+
+      pthread_t threads_out;
+      pthread_mutex_t mutex_out = PTHREAD_MUTEX_INITIALIZER;
+
+        args_t arg;
+        arg._id = 0;
+        arg.memory = (char *)shared_memory.c_str();
+        arg.mutex = &mutex_out;
+
+        pthread_create(&threads_out, NULL, regi_out, &arg);
+        pthread_join(threads_out, NULL);
 
   } else if (strcmp(argv[1], REGI_CMD) == 0) { // If reg
     string shared_memory = MEM_DFID;
@@ -193,6 +203,15 @@ void init(config_init_t * preset) {
     sem_init(&aux_inn[i].empty, 1, shm_config->queue_sample_length);
     sem_init(&aux_inn[i].mutex, 1, 1);
   }
+
+  aux_entrie_var_t * aux_out = (aux_entrie_var_t *)((shm_config + 1) + (shm_config->entries) + (shm_config->entries * shm_config->queue_input_length) + 3 + (3 * shm_config->queue_sample_length));
+
+  aux_out[0].in = 0;
+  aux_out[0].out = 0;
+
+  sem_init(&aux_out[0].full, 1, 0);
+  sem_init(&aux_out[0].empty, 1, shm_config->queue_output_length);
+  sem_init(&aux_out[0].mutex, 1, 1);
 
   sample_t * inner_samples = (sample_t *) aux_inn + 3;
 

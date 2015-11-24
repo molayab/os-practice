@@ -17,5 +17,6 @@ typedef struct args_t {
 
 void * kernel(void *);
 void * kernel_inn(void *);
+void * regi_out(void *);
 
 #endif
