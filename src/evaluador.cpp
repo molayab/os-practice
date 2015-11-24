@@ -5,6 +5,8 @@
 #include "shared_data.h"
 #include "core.h"
 
+#include <fstream>
+
 using namespace std;
 
 // Para recordar: tipo (*funcion)(arg1, arg2, argn) <- para hacer callbacks
@@ -241,6 +243,48 @@ void regi(string shared_memory, vector<string> files, bool isIterative) {
   } else {
     for (int i = 0; i < files.size(); ++i) {
       cout << files[i] << endl;
+
+      ifstream file(files[i].c_str());
+
+      while(!file.eof()) {
+        std::string s;
+        getline(file, s);
+
+        if (validarReg(s)) {
+          std::vector<std::string> v;
+
+          split(s, ' ', v);
+
+          sample_t sample;
+          sample.queue = atoi(v[0].c_str());
+          sample.kind = v[1].c_str()[0];
+          sample.quantity = atoi(v[2].c_str());
+
+          size_t len = shm_size("mem_size", NULL);
+          config_init_t * mem = (config_init_t *)shm_context(shared_memory.c_str(), len);
+          config_init_t * shm_config = mem;
+
+          aux_entrie_var_t * auxes = (aux_entrie_var_t *)mem + 1;
+
+          sem_wait(&auxes[sample.queue].empty);
+          sem_wait(&auxes[sample.queue].mutex);
+
+          sample_t * samples = (sample_t *)((shm_config + 1) + shm_config->entries);
+          //samples[(sample.queue * shm_config->entries) + auxes[sample.queue].in] = sample;
+          samples[(sample.queue * shm_config->queue_input_length) + auxes[sample.queue].in].queue = sample.queue;
+          samples[(sample.queue * shm_config->queue_input_length) + auxes[sample.queue].in].kind = sample.kind;
+          samples[(sample.queue * shm_config->queue_input_length) + auxes[sample.queue].in].quantity = sample.quantity;
+
+          auxes[sample.queue].in++;
+          if (auxes[sample.queue].in >= shm_config->queue_input_length) {
+            auxes[sample.queue].in = 0;
+          }
+
+          // Fin seccion critica - Productor
+          sem_post(&auxes[sample.queue].mutex);
+          sem_post(&auxes[sample.queue].full);
+        }
+      }
     }
   }
 }
